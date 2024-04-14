@@ -1,8 +1,7 @@
 import { useEffect } from "react";
 import { useState } from "react";
-import { IMask, IMaskInput, IMaskMixin } from "react-imask";
+import { IMaskInput } from "react-imask";
 import FlagMexico from './assets/Flag_of_Mexico.svg';
-import { useFormik } from 'formik';
 import './App.css'
 
 function App() {
@@ -24,19 +23,6 @@ function App() {
     handleInputType(value);
   }
 
-  const {handleBlur, handleSubmit, values, errors} = useFormik({
-    initialValues: {
-      email: '',
-      phone: '',
-    },
-    onSubmit: (values) => {
-      console.log(values);
-    },
-  });
-  
-  
-
-
 
   return (
     <div>
@@ -44,16 +30,15 @@ function App() {
       {
         inputType === 'email' ?
             <input type="email" value={inputValue} onChange={handleChange} autoFocus id="email" name="email"
-            // onBlur={(e) => {
-            //   const value = e.target.value;
-            //   const valueMatch = value.match( /^\w+([.-_+]?\w+)*@\w+([.-]?\w+)*(\.\w{2,10})+$/);
-            //   if(!valueMatch) {
-            //     setMessage('Correo inválido');
-            //   } else {
-            //     setMessage('');
-            //   }
-            // }}
-            onBlur={handleBlur} 
+            onBlur={(e) => {
+              const value = e.target.value;
+              const valueMatch = value.match( /^\w+([.-_+]?\w+)*@\w+([.-]?\w+)*(\.\w{2,10})+$/);
+              if(!valueMatch) {
+                setMessage('Correo inválido');
+              } else {
+                setMessage('');
+              }
+            }}
             />
            :
           <>
