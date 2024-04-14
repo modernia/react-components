@@ -1,51 +1,41 @@
+import { useEffect } from "react";
 import { useState } from "react";
-import { IMaskInput } from "react-imask";
+import { IMask, IMaskInput, IMaskMixin } from "react-imask";
 import FlagMexico from './assets/Flag_of_Mexico.svg';
 import { useFormik } from 'formik';
 import './App.css'
 
-import * as Yup from 'yup';
-
-const validationSchema = Yup.object().shape({
-  phone: Yup.string().when('email', {
-    is: (email) => email?.length === 0,
-    then:() => Yup.string().matches(/^\d{10}$/, 'Número de teléfono inválido').required('Número de teléfono requerido'),
-    otherwise:() => Yup.string().matches(/^\d{10}$/, 'Número de teléfono inválido').optional(),
-  }),
-  email: Yup.string().when('phone', {
-    is: (phone) => phone?.length === 0 || phone === undefined,
-    then: (e) =>  Yup.string().email('Correo inválido').required('Correo o número de teléfono requerido'),
-    otherwise: () => Yup.string().email('Correo inválido'),
-  })
-  
-}, ['email', 'phone']);
-
 function App() {
   const [inputType, setInputType] = useState('email');
-  const {handleBlur, handleSubmit, handleChange, values, errors, isValid} = useFormik({
-    initialValues: {
-      email: '',
-      phone: '',
-    },
-    validationSchema,
-    onSubmit: (values) => {
-      console.log(values);
-    },
-  });
+  const [inputValue, setInputValue] = useState('');
+  const [message, setMessage] = useState('');
 
   const handleInputType = (type) => {
     if(type.match( /^\w+([.-_+]?\w+)*@\w+([.-]?\w+)*(\.\w{2,10})+$/) ) {
       setInputType('email');
     } else if(type.match(/^\d{4}$/)) {
       setInputType('phone');
-      values.phone = type
     }
   }
 
-  const handleChangeV2 = (e) => {
+  const handleChange = (e) => {
     const value = e.target.value;
+    setInputValue(value);
     handleInputType(value);
   }
+
+  const {handleBlur, handleSubmit, values, errors} = useFormik({
+    initialValues: {
+      email: '',
+      phone: '',
+    },
+    onSubmit: (values) => {
+      console.log(values);
+    },
+  });
+  
+  
+
 
 
   return (
@@ -53,13 +43,17 @@ function App() {
       <div className="input-group">
       {
         inputType === 'email' ?
-            <input type="email" value={values.email} onChange={(e) => {
-              handleChangeV2(e);
-              handleChange(e);
-
-            }} autoFocus id="email" name="email"
-            onBlur={handleBlur}
-
+            <input type="email" value={inputValue} onChange={handleChange} autoFocus id="email" name="email"
+            // onBlur={(e) => {
+            //   const value = e.target.value;
+            //   const valueMatch = value.match( /^\w+([.-_+]?\w+)*@\w+([.-]?\w+)*(\.\w{2,10})+$/);
+            //   if(!valueMatch) {
+            //     setMessage('Correo inválido');
+            //   } else {
+            //     setMessage('');
+            //   }
+            // }}
+            onBlur={handleBlur} 
             />
            :
           <>
@@ -69,25 +63,26 @@ function App() {
             }} />
             <IMaskInput
             mask={'+{52} (00) 0000 00 00'}
-            value={values.phone}
-            id="phone"
-            name="phone"
+            value={inputValue}
             autoFocus
-            onBlur={handleBlur}
+            onBlur={((e) => {
+              const value = e.target.value;
+              const clearValue = value.replace(/\D/g, '').slice(2);
+              if(clearValue.length !== 10) {
+                setMessage('Número de teléfono incompleto');
+              } else  {
+                setMessage('');
+              }
+            })}
             onAccept={(value) => {
               const clearValue = value.replace(/\D/g, '');
               const numberPhone = clearValue.slice(2);
-              if(value.length === 0) {
+              if(numberPhone.length === 10) {
+                setInputValue(value);
+              } else if(value.length === 0) {
+                setInputValue('');
                 setInputType('email');
-                values.phone = '';
               }
-              values.email = '';
-              handleChange({
-                target: {
-                  name: 'phone',
-                  value: numberPhone,
-                }
-              });
 
             }}
           />
@@ -95,16 +90,20 @@ function App() {
       }
       </div>
 
-      {errors.email && <p>{errors.email}</p>}
-      {errors.phone && <p>{errors.phone}</p>}
+      {message && <p>{message}</p>}
 
-      <button className="p-2 bg-purple-700 hover:bg-purple-800 text-white rounded-md mt-4"
+      <button
         style={{
-          opacity: (errors.email || errors.phone) || !isValid ? 0.5 : 1,
+          padding: '10px',
+          backgroundColor: '#007bff',
+          color: '#fff',
+          border: 'none',
+          borderRadius: '5px',
+          cursor: !message && inputValue ? 'pointer' : 'not-allowed',
+          marginTop: '10px',
+          opacity: !message && inputValue ? 1 : .5,
         }}
-        type="submit"
-        disabled={errors.email || errors.phone}
-        onClick={handleSubmit}
+        disabled={message || !inputValue}
       >
         Enviar
       </button>
